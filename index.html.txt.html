@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foundry Charge Calculator - Authentic Periodic Table</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          gridTemplateColumns: {
+            '18': 'repeat(18, minmax(0, 1fr))',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Authentic Periodic Table Card Styles */
+    .pt-cell {
+      aspect-ratio: 1 / 1;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .pt-cell:hover {
+      transform: scale(1.12);
+      z-index: 30;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+    }
+    .pt-cell.selected {
+      border-color: #38bdf8 !important;
+      background-color: rgba(14, 165, 233, 0.35) !important;
+      box-shadow: 0 0 14px #38bdf8;
+      z-index: 20;
+    }
+
+    /* Category Colors */
+    .cat-reactive { background: rgba(30, 58, 138, 0.4); border-color: rgba(59, 130, 246, 0.4); }
+    .cat-alkali { background: rgba(153, 27, 27, 0.4); border-color: rgba(239, 68, 68, 0.4); }
+    .cat-alkaline { background: rgba(146, 64, 14, 0.4); border-color: rgba(245, 158, 11, 0.4); }
+    .cat-transition { background: rgba(6, 78, 59, 0.4); border-color: rgba(16, 185, 129, 0.4); }
+    .cat-post-transition { background: rgba(19, 78, 74, 0.4); border-color: rgba(20, 184, 166, 0.4); }
+    .cat-metalloid { background: rgba(113, 63, 18, 0.4); border-color: rgba(234, 179, 8, 0.4); }
+    .cat-noble { background: rgba(88, 28, 135, 0.4); border-color: rgba(168, 85, 247, 0.4); }
+    .cat-lanthanide { background: rgba(131, 24, 67, 0.4); border-color: rgba(236, 72, 153, 0.4); }
+    .cat-actinide { background: rgba(120, 53, 15, 0.4); border-color: rgba(217, 119, 6, 0.4); }
+  </style>
+</head>
+<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 flex flex-col selection:bg-sky-500 selection:text-white">
+
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-gradient-to-tr from-amber-600 via-sky-600 to-cyan-500 rounded-xl shadow-lg shadow-sky-500/20 text-white">
+          <i data-lucide="flame" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+            Foundry Charge Calculator
+            <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">100kg Charge Mix</span>
+          </h1>
+          <p class="text-xs text-slate-400">Periodic Table Element Selector & Scrap Optimization</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="quickPresetBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded-lg transition border border-slate-700">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> Load Gray Iron Preset
+        </button>
+        <button id="resetAllBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg transition border border-slate-700/50">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear All
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Step 1: Authentic Periodic Table Grid -->
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">1</span>
+            Select Alloy Elements (Periodic Table Layout)
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">Click any element on the periodic table to include or remove it from your metallurgical calculations.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-slate-400">Active Elements:</span>
+          <div id="selectedBadges" class="flex flex-wrap gap-1"></div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons & Category Legend -->
+      <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 font-medium text-[11px] uppercase tracking-wider">Presets:</span>
+          <button type="button" onclick="selectPresetGroup('ferrous')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700/60 transition">
+            Ferrous (C, Si, Mn, P, S)
+          </button>
+          <button type="button" onclick="selectPresetGroup('stainless')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700/60 transition">
+            Stainless (C, Si, Mn, Cr, Ni, Mo)
+          </button>
+          <button type="button" onclick="selectPresetGroup('clear')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700/60 transition">
+            Clear
+          </button>
+        </div>
+
+        <!-- Category Legend -->
+        <div class="flex items-center gap-2 overflow-x-auto text-[10px] text-slate-400 py-1">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-blue-900 border border-blue-500"></span> Nonmetal</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-900 border border-emerald-500"></span> Transition Metal</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-900 border border-amber-500"></span> Metalloid</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-teal-900 border border-teal-500"></span> Post-Transition</span>
+        </div>
+      </div>
+
+      <!-- Scrollable 18-Column Periodic Table Canvas -->
+      <div class="overflow-x-auto pb-2">
+        <div id="periodicTableGrid" class="min-w-[860px] grid grid-cols-18 gap-1.5 p-1 bg-slate-950/50 rounded-xl border border-slate-800/80">
+          <!-- Dynamic periodic table injected here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2 & 3 Dual-Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- Left Column: Inputs -->
+      <div class="lg:col-span-6 space-y-6">
+
+        <!-- Target Composition Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">2</span>
+                Target Elemental Percentage (%)
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Define target chemical specification for 100 kg total charge weight.</p>
+            </div>
+          </div>
+          <div id="targetFormContainer" class="overflow-x-auto"></div>
+        </div>
+
+        <!-- Scrap Inventory Matrix Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">3</span>
+                Scrap Alloy Inventory Compositions
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Enter elemental percentage analysis for each available scrap grade.</p>
+            </div>
+            <button type="button" id="addScrapBtn" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-sky-600/20 text-sky-300 hover:bg-sky-600/30 border border-sky-500/30 transition">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Scrap
+            </button>
+          </div>
+          <div id="scrapFormContainer" class="overflow-x-auto max-h-80"></div>
+        </div>
+
+        <!-- Run Calculation Settings -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <label for="stepResolution" class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="sliders" class="w-4 h-4 text-sky-400"></i> Search Increment Step:
+            </label>
+            <select id="stepResolution" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500">
+              <option value="1">1% Step (5,151 mixes for 3 scraps)</option>
+              <option value="2" selected>2% Step (Balanced Speed & Precision)</option>
+              <option value="5">5% Step (Fast Overview)</option>
+              <option value="10">10% Step (Coarse Search)</option>
+            </select>
+          </div>
+          <button type="button" id="calculateBtn" class="w-full py-3 px-4 bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600 hover:from-sky-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2 transition-all transform active:scale-[0.99]">
+            <i data-lucide="calculator" class="w-4 h-4"></i> Calculate Optimal Charge Combinations
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Results & Analytics -->
+      <div class="lg:col-span-6 space-y-6">
+
+        <!-- Chart Comparison Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-sky-400"></i> Target vs Selected Scrap Blend
+              </h3>
+              <p class="text-xs text-slate-400">Compare target values with the blend selected in the table below.</p>
+            </div>
+            <span id="rankBadge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+              Rank #1 Match
+            </span>
+          </div>
+          <div class="h-56 relative w-full">
+            <canvas id="chartCanvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i data-lucide="list-filter" class="w-4 h-4 text-sky-400"></i> Evaluated Charge Mixes
+              </h3>
+              <p id="resultsCountSummary" class="text-xs text-slate-400">Click Calculate to run simulation.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="filterInput" placeholder="Filter percentages..." class="bg-slate-800 border border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 w-36">
+              </div>
+              <button id="exportCsvBtn" disabled class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition disabled:opacity-40">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-[400px] rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-800/90 sticky top-0 z-10 text-slate-300 font-semibold border-b border-slate-700">
+                <tr id="resultsHeaderRow">
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">Similarity</th>
+                </tr>
+              </thead>
+              <tbody id="resultsTbody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+                <tr>
+                  <td colspan="12" class="py-12 text-center text-slate-500 font-sans">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                      <i data-lucide="layers" class="w-8 h-8 text-slate-600"></i>
+                      <p class="text-sm">Select elements above and click "Calculate Optimal Charge".</p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
+            <div class="flex items-center gap-1.5">
+              <span>Show</span>
+              <select id="pageSizeSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200">
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+              <span>per page</span>
+            </div>
+            <div id="paginationNav" class="flex items-center gap-1"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    // Complete Periodic Table Dataset with standard column (1-18) and period (1-7 + f-block) grid positions
+    const FULL_PERIODIC_TABLE = [
+      // Period 1
+      { symbol: "H", name: "Hydrogen", num: 1, col: 1, row: 1, cat: "cat-reactive" },
+      { symbol: "He", name: "Helium", num: 2, col: 18, row: 1, cat: "cat-noble" },
+      // Period 2
+      { symbol: "Li", name: "Lithium", num: 3, col: 1, row: 2, cat: "cat-alkali" },
+      { symbol: "Be", name: "Beryllium", num: 4, col: 2, row: 2, cat: "cat-alkaline" },
+      { symbol: "B", name: "Boron", num: 5, col: 13, row: 2, cat: "cat-metalloid" },
+      { symbol: "C", name: "Carbon", num: 6, col: 14, row: 2, cat: "cat-reactive" },
+      { symbol: "N", name: "Nitrogen", num: 7, col: 15, row: 2, cat: "cat-reactive" },
+      { symbol: "O", name: "Oxygen", num: 8, col: 16, row: 2, cat: "cat-reactive" },
+      { symbol: "F", name: "Fluorine", num: 9, col: 17, row: 2, cat: "cat-reactive" },
+      { symbol: "Ne", name: "Neon", num: 10, col: 18, row: 2, cat: "cat-noble" },
+      // Period 3
+      { symbol: "Na", name: "Sodium", num: 11, col: 1, row: 3, cat: "cat-alkali" },
+      { symbol: "Mg", name: "Magnesium", num: 12, col: 2, row: 3, cat: "cat-alkaline" },
+      { symbol: "Al", name: "Aluminium", num: 13, col: 13, row: 3, cat: "cat-post-transition" },
+      { symbol: "Si", name: "Silicon", num: 14, col: 14, row: 3, cat: "cat-metalloid" },
+      { symbol: "P", name: "Phosphorus", num: 15, col: 15, row: 3, cat: "cat-reactive" },
+      { symbol: "S", name: "Sulfur", num: 16, col: 16, row: 3, cat: "cat-reactive" },
+      { symbol: "Cl", name: "Chlorine", num: 17, col: 17, row: 3, cat: "cat-reactive" },
+      { symbol: "Ar", name: "Argon", num: 18, col: 18, row: 3, cat: "cat-noble" },
+      // Period 4
+      { symbol: "K", name: "Potassium", num: 19, col: 1, row: 4, cat: "cat-alkali" },
+      { symbol: "Ca", name: "Calcium", num: 20, col: 2, row: 4, cat: "cat-alkaline" },
+      { symbol: "Sc", name: "Scandium", num: 21, col: 3, row: 4, cat: "cat-transition" },
+      { symbol: "Ti", name: "Titanium", num: 22, col: 4, row: 4, cat: "cat-transition" },
+      { symbol: "V", name: "Vanadium", num: 23, col: 5, row: 4, cat: "cat-transition" },
+      { symbol: "Cr", name: "Chromium", num: 24, col: 6, row: 4, cat: "cat-transition" },
+      { symbol: "Mn", name: "Manganese", num: 25, col: 7, row: 4, cat: "cat-transition" },
+      { symbol: "Fe", name: "Iron", num: 26, col: 8, row: 4, cat: "cat-transition" },
+      { symbol: "Co", name: "Cobalt", num: 27, col: 9, row: 4, cat: "cat-transition" },
+      { symbol: "Ni", name: "Nickel", num: 28, col: 10, row: 4, cat: "cat-transition" },
+      { symbol: "Cu", name: "Copper", num: 29, col: 11, row: 4, cat: "cat-transition" },
+      { symbol: "Zn", name: "Zinc", num: 30, col: 12, row: 4, cat: "cat-post-transition" },
+      { symbol: "Ga", name: "Gallium", num: 31, col: 13, row: 4, cat: "cat-post-transition" },
+      { symbol: "Ge", name: "Germanium", num: 32, col: 14, row: 4, cat: "cat-metalloid" },
+      { symbol: "As", name: "Arsenic", num: 33, col: 15, row: 4, cat: "cat-metalloid" },
+      { symbol: "Se", name: "Selenium", num: 34, col: 16, row: 4, cat: "cat-reactive" },
+      { symbol: "Br", name: "Bromine", num: 35, col: 17, row: 4, cat: "cat-reactive" },
+      { symbol: "Kr", name: "Krypton", num: 36, col: 18, row: 4, cat: "cat-noble" },
+      // Period 5
+      { symbol: "Rb", name: "Rubidium", num: 37, col: 1, row: 5, cat: "cat-alkali" },
+      { symbol: "Sr", name: "Strontium", num: 38, col: 2, row: 5, cat: "cat-alkaline" },
+      { symbol: "Y", name: "Yttrium", num: 39, col: 3, row: 5, cat: "cat-transition" },
+      { symbol: "Zr", name: "Zirconium", num: 40, col: 4, row: 5, cat: "cat-transition" },
+      { symbol: "Nb", name: "Niobium", num: 41, col: 5, row: 5, cat: "cat-transition" },
+      { symbol: "Mo", name: "Molybdenum", num: 42, col: 6, row: 5, cat: "cat-transition" },
+      { symbol: "Tc", name: "Technetium", num: 43, col: 7, row: 5, cat: "cat-transition" },
+      { symbol: "Ru", name: "Ruthenium", num: 44, col: 8, row: 5, cat: "cat-transition" },
+      { symbol: "Rh", name: "Rhodium", num: 45, col: 9, row: 5, cat: "cat-transition" },
+      { symbol: "Pd", name: "Palladium", num: 46, col: 10, row: 5, cat: "cat-transition" },
+      { symbol: "Ag", name: "Silver", num: 47, col: 11, row: 5, cat: "cat-transition" },
+      { symbol: "Cd", name: "Cadmium", num: 48, col: 12, row: 5, cat: "cat-post-transition" },
+      { symbol: "In", name: "Indium", num: 49, col: 13, row: 5, cat: "cat-post-transition" },
+      { symbol: "Sn", name: "Tin", num: 50, col: 14, row: 5, cat: "cat-post-transition" },
+      { symbol: "Sb", name: "Antimony", num: 51, col: 15, row: 5, cat: "cat-metalloid" },
+      { symbol: "Te", name: "Tellurium", num: 52, col: 16, row: 5, cat: "cat-metalloid" },
+      { symbol: "I", name: "Iodine", num: 53, col: 17, row: 5, cat: "cat-reactive" },
+      { symbol: "Xe", name: "Xenon", num: 54, col: 18, row: 5, cat: "cat-noble" },
+      // Period 6
+      { symbol: "Cs", name: "Caesium", num: 55, col: 1, row: 6, cat: "cat-alkali" },
+      { symbol: "Ba", name: "Barium", num: 56, col: 2, row: 6, cat: "cat-alkaline" },
+      { symbol: "La-Lu", name: "Lanthanides", num: "57-71", col: 3, row: 6, cat: "cat-lanthanide", placeholder: true },
+      { symbol: "Hf", name: "Hafnium", num: 72, col: 4, row: 6, cat: "cat-transition" },
+      { symbol: "Ta", name: "Tantalum", num: 73, col: 5, row: 6, cat: "cat-transition" },
+      { symbol: "W", name: "Tungsten", num: 74, col: 6, row: 6, cat: "cat-transition" },
+      { symbol: "Re", name: "Rhenium", num: 75, col: 7, row: 6, cat: "cat-transition" },
+      { symbol: "Os", name: "Osmium", num: 76, col: 8, row: 6, cat: "cat-transition" },
+      { symbol: "Ir", name: "Iridium", num: 77, col: 9, row: 6, cat: "cat-transition" },
+      { symbol: "Pt", name: "Platinum", num: 78, col: 10, row: 6, cat: "cat-transition" },
+      { symbol: "Au", name: "Gold", num: 79, col: 11, row: 6, cat: "cat-transition" },
+      { symbol: "Hg", name: "Mercury", num: 80, col: 12, row: 6, cat: "cat-post-transition" },
+      { symbol: "Tl", name: "Thallium", num: 81, col: 13, row: 6, cat: "cat-post-transition" },
+      { symbol: "Pb", name: "Lead", num: 82, col: 14, row: 6, cat: "cat-post-transition" },
+      { symbol: "Bi", name: "Bismuth", num: 83, col: 15, row: 6, cat: "cat-post-transition" },
+      { symbol: "Po", name: "Polonium", num: 84, col: 16, row: 6, cat: "cat-post-transition" },
+      { symbol: "At", name: "Astatine", num: 85, col: 17, row: 6, cat: "cat-metalloid" },
+      { symbol: "Rn", name: "Radon", num: 86, col: 18, row: 6, cat: "cat-noble" },
+      // Period 7
+      { symbol: "Fr", name: "Francium", num: 87, col: 1, row: 7, cat: "cat-alkali" },
+      { symbol: "Ra", name: "Radium", num: 88, col: 2, row: 7, cat: "cat-alkaline" },
+      { symbol: "Ac-Lr", name: "Actinides", num: "89-103", col: 3, row: 7, cat: "cat-actinide", placeholder: true },
+      { symbol: "Rf", name: "Rutherfordium", num: 104, col: 4, row: 7, cat: "cat-transition" },
+      { symbol: "Db", name: "Dubnium", num: 105, col: 5, row: 7, cat: "cat-transition" },
+      { symbol: "Sg", name: "Seaborgium", num: 106, col: 6, row: 7, cat: "cat-transition" },
+      { symbol: "Bh", name: "Bohrium", num: 107, col: 7, row: 7, cat: "cat-transition" },
+      { symbol: "Hs", name: "Hassium", num: 108, col: 8, row: 7, cat: "cat-transition" },
+      { symbol: "Mt", name: "Meitnerium", num: 109, col: 9, row: 7, cat: "cat-transition" },
+      { symbol: "Ds", name: "Darmstadtium", num: 110, col: 10, row: 7, cat: "cat-transition" },
+      { symbol: "Rg", name: "Roentgenium", num: 111, col: 11, row: 7, cat: "cat-transition" },
+      { symbol: "Cn", name: "Copernicium", num: 112, col: 12, row: 7, cat: "cat-transition" },
+      { symbol: "Nh", name: "Nihonium", num: 113, col: 13, row: 7, cat: "cat-post-transition" },
+      { symbol: "Fl", name: "Flerovium", num: 114, col: 14, row: 7, cat: "cat-post-transition" },
+      { symbol: "Mc", name: "Moscovium", num: 115, col: 15, row: 7, cat: "cat-post-transition" },
+      { symbol: "Lv", name: "Livermorium", num: 116, col: 16, row: 7, cat: "cat-post-transition" },
+      { symbol: "Ts", name: "Tennessine", num: 117, col: 17, row: 7, cat: "cat-reactive" },
+      { symbol: "Og", name: "Oganesson", num: 118, col: 18, row: 7, cat: "cat-noble" },
+
+      // Lanthanides Row (Row 8 offset)
+      { symbol: "La", name: "Lanthanum", num: 57, col: 4, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Ce", name: "Cerium", num: 58, col: 5, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Pr", name: "Praseodymium", num: 59, col: 6, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Nd", name: "Neodymium", num: 60, col: 7, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Pm", name: "Promethium", num: 61, col: 8, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Sm", name: "Samarium", num: 62, col: 9, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Eu", name: "Europium", num: 63, col: 10, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Gd", name: "Gadolinium", num: 64, col: 11, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Tb", name: "Terbium", num: 65, col: 12, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Dy", name: "Dysprosium", num: 66, col: 13, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Ho", name: "Holmium", num: 67, col: 14, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Er", name: "Erbium", num: 68, col: 15, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Tm", name: "Thulium", num: 69, col: 16, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Yb", name: "Ytterbium", num: 70, col: 17, row: 8.5, cat: "cat-lanthanide" },
+      { symbol: "Lu", name: "Lutetium", num: 71, col: 18, row: 8.5, cat: "cat-lanthanide" },
+
+      // Actinides Row (Row 9 offset)
+      { symbol: "Ac", name: "Actinium", num: 89, col: 4, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Th", name: "Thorium", num: 90, col: 5, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Pa", name: "Protactinium", num: 91, col: 6, row: 9.5, cat: "cat-actinide" },
+      { symbol: "U", name: "Uranium", num: 92, col: 7, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Np", name: "Neptunium", num: 93, col: 8, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Pu", name: "Plutonium", num: 94, col: 9, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Am", name: "Americium", num: 95, col: 10, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Cm", name: "Curium", num: 96, col: 11, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Bk", name: "Berkelium", num: 97, col: 12, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Cf", name: "Californium", num: 98, col: 13, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Es", name: "Einsteinium", num: 99, col: 14, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Fm", name: "Fermium", num: 100, col: 15, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Md", name: "Mendelevium", num: 101, col: 16, row: 9.5, cat: "cat-actinide" },
+      { symbol: "No", name: "Nobelium", num: 102, col: 17, row: 9.5, cat: "cat-actinide" },
+      { symbol: "Lr", name: "Lawrencium", num: 103, col: 18, row: 9.5, cat: "cat-actinide" }
+    ];
+
+    // State Variables
+    let selectedElements = new Set(["C", "Si", "Mn", "P", "S"]);
+    let targetValues = { "C": 3.40, "Si": 2.10, "Mn": 0.60, "P": 0.05, "S": 0.05 };
+    let scrapsList = [
+      { name: "Scrap_1", values: { "C": 3.80, "Si": 1.80, "Mn": 0.50, "P": 0.04, "S": 0.04 } },
+      { name: "Scrap_2", values: { "C": 2.20, "Si": 2.50, "Mn": 0.70, "P": 0.05, "S": 0.03 } },
+      { name: "Scrap_3", values: { "C": 0.20, "Si": 0.10, "Mn": 0.40, "P": 0.02, "S": 0.02 } }
+    ];
+
+    let calculatedResults = [];
+    let filteredResults = [];
+    let selectedRowIdx = 0;
+    let currentPage = 1;
+    let pageSize = 15;
+    let chartObj = null;
+
+    // Initialization
+    window.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      renderAuthenticPeriodicTable();
+      renderSelectedBadges();
+      renderTargetTable();
+      renderScrapTable();
+      initChart();
+
+      document.getElementById("calculateBtn").addEventListener("click", runCalculation);
+      document.getElementById("addScrapBtn").addEventListener("click", addScrapItem);
+      document.getElementById("quickPresetBtn").addEventListener("click", () => selectPresetGroup('ferrous'));
+      document.getElementById("resetAllBtn").addEventListener("click", () => selectPresetGroup('clear'));
+      document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+      document.getElementById("filterInput").addEventListener("input", applyFilter);
+      document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
+        pageSize = parseInt(e.target.value);
+        currentPage = 1;
+        renderResultsTable();
+      });
+
+      runCalculation();
+    });
+
+    function renderAuthenticPeriodicTable() {
+      const grid = document.getElementById("periodicTableGrid");
+      grid.innerHTML = "";
+
+      // 18 columns, rows 1 to 7 main + row 8 gap + row 8.5 & 9.5 for Lanthanides/Actinides
+      for (let r = 1; r <= 9.5; r += (r === 7 ? 1.5 : (r === 8.5 ? 1 : 1))) {
+        if (r === 8) {
+          // Spacer row before f-block
+          for (let c = 1; c <= 18; c++) {
+            grid.appendChild(document.createElement("div"));
+          }
+          continue;
+        }
+
+        for (let c = 1; c <= 18; c++) {
+          const elem = FULL_PERIODIC_TABLE.find(e => e.row === r && e.col === c);
+
+          if (elem) {
+            const isSelected = selectedElements.has(elem.symbol);
+            const isPlaceholder = elem.placeholder;
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.disabled = isPlaceholder;
+            btn.className = `pt-cell p-1 rounded-md border text-left flex flex-col justify-between font-mono relative cursor-pointer ${elem.cat} ${
+              isSelected ? 'selected' : 'hover:border-slate-300'
+            } ${isPlaceholder ? 'opacity-50 cursor-default' : ''}`;
+
+            if (!isPlaceholder) {
+              btn.onclick = () => toggleElement(elem.symbol);
+            }
+
+            btn.innerHTML = `
+              <div class="text-[8px] leading-none text-slate-300 font-semibold flex justify-between">
+                <span>${elem.num}</span>
+              </div>
+              <div class="text-xs font-bold text-center text-white my-auto">${elem.symbol}</div>
+              <div class="text-[7px] leading-none text-slate-400 truncate text-center">${elem.name}</div>
+            `;
+            grid.appendChild(btn);
+          } else {
+            const emptyCell = document.createElement("div");
+            emptyCell.className = "pt-cell pointer-events-none";
+            grid.appendChild(emptyCell);
+          }
+        }
+      }
+    }
+
+    function toggleElement(symbol) {
+      if (selectedElements.has(symbol)) {
+        if (selectedElements.size <= 1) {
+          alert("At least one element must remain selected.");
+          return;
+        }
+        selectedElements.delete(symbol);
+        delete targetValues[symbol];
+      } else {
+        selectedElements.add(symbol);
+        targetValues[symbol] = 1.0;
+      }
+      renderAuthenticPeriodicTable();
+      renderSelectedBadges();
+      renderTargetTable();
+      renderScrapTable();
+    }
+
+    function selectPresetGroup(type) {
+      if (type === 'ferrous') {
+        selectedElements = new Set(["C", "Si", "Mn", "P", "S"]);
+        targetValues = { "C": 3.40, "Si": 2.10, "Mn": 0.60, "P": 0.05, "S": 0.05 };
+      } else if (type === 'stainless') {
+        selectedElements = new Set(["C", "Si", "Mn", "Cr", "Ni", "Mo"]);
+        targetValues = { "C": 0.08, "Si": 1.00, "Mn": 2.00, "Cr": 18.00, "Ni": 8.00, "Mo": 0.50 };
+      } else if (type === 'clear') {
+        selectedElements = new Set(["C", "Si"]);
+        targetValues = { "C": 3.0, "Si": 2.0 };
+      }
+
+      // Re-align scrap matrices
+      scrapsList.forEach(s => {
+        selectedElements.forEach(e => {
+          if (s.values[e] === undefined) s.values[e] = 0.0;
+        });
+      });
+
+      renderAuthenticPeriodicTable();
+      renderSelectedBadges();
+      renderTargetTable();
+      renderScrapTable();
+      runCalculation();
+    }
+
+    function renderSelectedBadges() {
+      const container = document.getElementById("selectedBadges");
+      container.innerHTML = "";
+      selectedElements.forEach(symbol => {
+        const badge = document.createElement("span");
+        badge.className = "px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-mono font-semibold flex items-center gap-1";
+        badge.innerHTML = `${symbol} <i data-lucide="x" class="w-3 h-3 cursor-pointer hover:text-white" onclick="toggleElement('${symbol}')"></i>`;
+        container.appendChild(badge);
+      });
+      lucide.createIcons();
+    }
+
+    function renderTargetTable() {
+      const container = document.getElementById("targetFormContainer");
+      const elems = Array.from(selectedElements);
+
+      let html = `
+        <table class="w-full text-xs text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 text-slate-400 font-semibold">
+              ${elems.map(e => `<th class="py-2 px-2 text-center text-sky-400">${e} Target %</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              ${elems.map(e => `
+                <td class="py-2 px-1">
+                  <input type="number" step="0.01" value="${targetValues[e] ?? 0.0}" 
+                         onchange="targetValues['${e}'] = parseFloat(this.value) || 0.0"
+                         class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-center font-mono text-slate-100 focus:border-sky-500 focus:outline-none">
+                </td>
+              `).join('')}
+            </tr>
+          </tbody>
+        </table>
+      `;
+      container.innerHTML = html;
+    }
+
+    function renderScrapTable() {
+      const container = document.getElementById("scrapFormContainer");
+      const elems = Array.from(selectedElements);
+
+      let html = `
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="bg-slate-800/60 sticky top-0">
+            <tr class="border-b border-slate-700 text-slate-300 font-semibold">
+              <th class="py-2 px-2 w-28">Scrap Name</th>
+              ${elems.map(e => `<th class="py-2 px-2 text-center text-emerald-400">${e} %</th>`).join('')}
+              <th class="py-2 px-1 w-8"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+      `;
+
+      scrapsList.forEach((scrap, sIdx) => {
+        html += `
+          <tr>
+            <td class="py-1.5 px-2">
+              <input type="text" value="${scrap.name}" onchange="scrapsList[${sIdx}].name = this.value.trim()"
+                     class="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 font-semibold text-sky-400 focus:border-sky-500 focus:outline-none">
+            </td>
+            ${elems.map(e => `
+              <td class="py-1.5 px-1">
+                <input type="number" step="0.01" value="${scrap.values[e] ?? 0.0}" 
+                       onchange="updateScrapElemValue(${sIdx}, '${e}', this.value)"
+                       class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-center font-mono text-slate-100 focus:border-sky-500 focus:outline-none">
+              </td>
+            `).join('')}
+            <td class="py-1.5 px-1 text-center">
+              <button type="button" onclick="removeScrapItem(${sIdx})" class="text-slate-500 hover:text-rose-400 p-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function addScrapItem() {
+      const idx = scrapsList.length + 1;
+      const newScrap = { name: `Scrap_${idx}`, values: {} };
+      selectedElements.forEach(e => newScrap.values[e] = 0.0);
+      scrapsList.push(newScrap);
+      renderScrapTable();
+    }
+
+    function removeScrapItem(idx) {
+      if (scrapsList.length <= 1) {
+        alert("Must keep at least one scrap material.");
+        return;
+      }
+      scrapsList.splice(idx, 1);
+      renderScrapTable();
+    }
+
+    function updateScrapElemValue(sIdx, elem, val) {
+      if (!scrapsList[sIdx].values) scrapsList[sIdx].values = {};
+      scrapsList[sIdx].values[elem] = parseFloat(val) || 0.0;
+    }
+
+    function* partitionWeight(partsCount, total, step) {
+      if (partsCount === 1) {
+        yield [total];
+        return;
+      }
+      for (let w = 0; w <= total; w += step) {
+        for (let rest of partitionWeight(partsCount - 1, total - w, step)) {
+          yield [w, ...rest];
+        }
+      }
+    }
+
+    function runCalculation() {
+      const elems = Array.from(selectedElements);
+      const scrapCount = scrapsList.length;
+      const step = parseInt(document.getElementById("stepResolution").value) || 2;
+
+      calculatedResults = [];
+
+      for (let weights of partitionWeight(scrapCount, 100, step)) {
+        let scrapAllocations = {};
+        scrapsList.forEach((s, idx) => {
+          scrapAllocations[s.name] = weights[idx];
+        });
+
+        let blendComposition = {};
+        let absErrorSum = 0.0;
+
+        elems.forEach(e => {
+          let targetPct = targetValues[e] ?? 0.0;
+          let achievedPct = 0.0;
+
+          scrapsList.forEach((s, idx) => {
+            let elemPctInScrap = s.values[e] ?? 0.0;
+            achievedPct += weights[idx] * (elemPctInScrap / 100.0);
+          });
+
+          blendComposition[e] = achievedPct;
+          absErrorSum += Math.abs(achievedPct - targetPct);
+        });
+
+        let similarity = Math.max(0.0, 100.0 - absErrorSum);
+
+        calculatedResults.push({
+          weights: scrapAllocations,
+          composition: blendComposition,
+          error: absErrorSum,
+          similarity: similarity
+        });
+      }
+
+      calculatedResults.sort((a, b) => b.similarity - a.similarity);
+
+      filteredResults = [...calculatedResults];
+      selectedRowIdx = 0;
+      currentPage = 1;
+
+      document.getElementById("exportCsvBtn").disabled = calculatedResults.length === 0;
+
+      renderResultsHeader();
+      renderResultsTable();
+      updateChart();
+    }
+
+    function renderResultsHeader() {
+      const headerRow = document.getElementById("resultsHeaderRow");
+      const elems = Array.from(selectedElements);
+
+      let html = `
+        <th class="py-2.5 px-3">#</th>
+        <th class="py-2.5 px-3">Similarity</th>
+      `;
+
+      scrapsList.forEach(s => {
+        html += `<th class="py-2.5 px-3 text-sky-400">${s.name} (kg)</th>`;
+      });
+
+      elems.forEach(e => {
+        html += `<th class="py-2.5 px-3 text-emerald-400">${e} (%)</th>`;
+      });
+
+      html += `<th class="py-2.5 px-3 text-slate-400">Abs Dev</th>`;
+      headerRow.innerHTML = html;
+    }
+
+    function renderResultsTable() {
+      const tbody = document.getElementById("resultsTbody");
+      const elems = Array.from(selectedElements);
+
+      tbody.innerHTML = "";
+
+      document.getElementById("resultsCountSummary").innerText = 
+        `Evaluated ${calculatedResults.length.toLocaleString()} mix solutions (${filteredResults.length.toLocaleString()} active).`;
+
+      if (filteredResults.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="15" class="py-8 text-center text-slate-500 font-sans">No matching combinations.</td></tr>`;
+        return;
+      }
+
+      let start = (currentPage - 1) * pageSize;
+      let end = Math.min(start + pageSize, filteredResults.length);
+
+      for (let i = start; i < end; i++) {
+        const res = filteredResults[i];
+        const tr = document.createElement("tr");
+        tr.className = `hover:bg-slate-800/80 cursor-pointer transition ${i === selectedRowIdx ? 'bg-sky-950/70 border-l-2 border-sky-400' : ''}`;
+        tr.onclick = () => {
+          selectedRowIdx = i;
+          renderResultsTable();
+          updateChart();
+        };
+
+        let badgeStyle = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        if (res.similarity < 95 && res.similarity >= 85) badgeStyle = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        else if (res.similarity < 85) badgeStyle = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+
+        let html = `
+          <td class="py-2 px-3 text-slate-500 text-[11px]">${i + 1}</td>
+          <td class="py-2 px-3">
+            <span class="inline-block px-2 py-0.5 rounded-full border text-[11px] font-semibold ${badgeStyle}">
+              ${res.similarity.toFixed(2)}%
+            </span>
+          </td>
+        `;
+
+        scrapsList.forEach(s => {
+          html += `<td class="py-2 px-3 font-semibold text-slate-200">${res.weights[s.name] ?? 0}</td>`;
+        });
+
+        elems.forEach(e => {
+          html += `<td class="py-2 px-3 text-emerald-300">${(res.composition[e] ?? 0).toFixed(2)}</td>`;
+        });
+
+        html += `<td class="py-2 px-3 text-slate-400">${res.error.toFixed(2)}</td>`;
+
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+      }
+
+      renderPaginationControls();
+    }
+
+    function applyFilter() {
+      const q = document.getElementById("filterInput").value.toLowerCase();
+      filteredResults = calculatedResults.filter(res => {
+        return Object.values(res.weights).some(w => w.toString().includes(q)) ||
+               res.similarity.toFixed(2).includes(q);
+      });
+      currentPage = 1;
+      selectedRowIdx = 0;
+      renderResultsTable();
+      updateChart();
+    }
+
+    function renderPaginationControls() {
+      const nav = document.getElementById("paginationNav");
+      nav.innerHTML = "";
+
+      const totalPages = Math.ceil(filteredResults.length / pageSize);
+      if (totalPages <= 1) return;
+
+      let prev = document.createElement("button");
+      prev.className = "px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs";
+      prev.innerText = "Prev";
+      prev.disabled = currentPage === 1;
+      prev.onclick = () => { currentPage--; renderResultsTable(); };
+
+      let next = document.createElement("button");
+      next.className = "px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs";
+      next.innerText = "Next";
+      next.disabled = currentPage === totalPages;
+      next.onclick = () => { currentPage++; renderResultsTable(); };
+
+      let info = document.createElement("span");
+      info.className = "text-slate-400 text-xs px-2";
+      info.innerText = `${currentPage} / ${totalPages}`;
+
+      nav.appendChild(prev);
+      nav.appendChild(info);
+      nav.appendChild(next);
+    }
+
+    function initChart() {
+      const ctx = document.getElementById("chartCanvas").getContext("2d");
+      chartObj = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Target %',
+              data: [],
+              backgroundColor: 'rgba(2, 132, 199, 0.75)',
+              borderColor: 'rgba(56, 189, 248, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            },
+            {
+              label: 'Achieved Mix %',
+              data: [],
+              backgroundColor: 'rgba(16, 185, 129, 0.75)',
+              borderColor: 'rgba(52, 211, 153, 1)',
+              borderWidth: 1,
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+          },
+          scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
+          }
+        }
+      });
+    }
+
+    function updateChart() {
+      if (!chartObj || filteredResults.length === 0) return;
+
+      const selected = filteredResults[selectedRowIdx] || filteredResults[0];
+      const elems = Array.from(selectedElements);
+
+      const targetData = elems.map(e => targetValues[e] ?? 0.0);
+      const achievedData = elems.map(e => selected.composition[e] ?? 0.0);
+
+      chartObj.data.labels = elems;
+      chartObj.data.datasets[0].data = targetData;
+      chartObj.data.datasets[1].data = achievedData;
+      chartObj.update();
+
+      document.getElementById("rankBadge").innerText = 
+        `Rank #${selectedRowIdx + 1} - ${selected.similarity.toFixed(2)}% Match`;
+    }
+
+    function exportCSV() {
+      if (calculatedResults.length === 0) return;
+
+      const elems = Array.from(selectedElements);
+      let headers = ['Rank', 'Similarity_Pct', 'Abs_Dev'];
+      scrapsList.forEach(s => headers.push(`${s.name}_kg`));
+      elems.forEach(e => headers.push(`${e}_pct`));
+
+      let rows = [headers.join(',')];
+
+      calculatedResults.forEach((res, idx) => {
+        let row = [
+          idx + 1,
+          res.similarity.toFixed(2),
+          res.error.toFixed(2)
+        ];
+        scrapsList.forEach(s => row.push(res.weights[s.name] ?? 0));
+        elems.forEach(e => row.push((res.composition[e] ?? 0).toFixed(4)));
+        rows.push(row.join(','));
+      });
+
+      const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `foundry_charge_mix_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
