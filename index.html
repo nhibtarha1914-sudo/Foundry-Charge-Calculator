@@ -1,927 +1,254 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en" class="bg-slate-950 text-slate-100">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Foundry Charge Calculator - Authentic Periodic Table</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          gridTemplateColumns: {
-            '18': 'repeat(18, minmax(0, 1fr))',
-          }
-        }
-      }
-    }
-  </script>
-  <style>
-    /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-    /* Authentic Periodic Table Card Styles */
-    .pt-cell {
-      aspect-ratio: 1 / 1;
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      user-select: none;
-    }
-    .pt-cell:hover {
-      transform: scale(1.12);
-      z-index: 30;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-    }
-    .pt-cell.selected {
-      border-color: #38bdf8 !important;
-      background-color: rgba(14, 165, 233, 0.35) !important;
-      box-shadow: 0 0 14px #38bdf8;
-      z-index: 20;
-    }
-
-    /* Category Colors */
-    .cat-reactive { background: rgba(30, 58, 138, 0.4); border-color: rgba(59, 130, 246, 0.4); }
-    .cat-alkali { background: rgba(153, 27, 27, 0.4); border-color: rgba(239, 68, 68, 0.4); }
-    .cat-alkaline { background: rgba(146, 64, 14, 0.4); border-color: rgba(245, 158, 11, 0.4); }
-    .cat-transition { background: rgba(6, 78, 59, 0.4); border-color: rgba(16, 185, 129, 0.4); }
-    .cat-post-transition { background: rgba(19, 78, 74, 0.4); border-color: rgba(20, 184, 166, 0.4); }
-    .cat-metalloid { background: rgba(113, 63, 18, 0.4); border-color: rgba(234, 179, 8, 0.4); }
-    .cat-noble { background: rgba(88, 28, 135, 0.4); border-color: rgba(168, 85, 247, 0.4); }
-    .cat-lanthanide { background: rgba(131, 24, 67, 0.4); border-color: rgba(236, 72, 153, 0.4); }
-    .cat-actinide { background: rgba(120, 53, 15, 0.4); border-color: rgba(217, 119, 6, 0.4); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foundry Charge Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+<script src="https://unpkg.com/lucide@0.383.0"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif'],mono:['JetBrains Mono','monospace']}}}}</script>
+<style>
+html{-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+.inp{width:100%;min-width:5.5rem;min-height:46px;padding:.5rem .6rem;font-size:16px;background:#1e293b;border:1px solid #475569;border-radius:.6rem;color:#f1f5f9;text-align:center}
+.inp:focus{outline:2px solid #38bdf8;border-color:#38bdf8}
+.inp.l{text-align:left;min-width:9rem}
+select.inp{text-align:left;min-width:5rem}
+.btn{min-height:44px;padding:.5rem 1rem;font-size:14px;border-radius:.6rem;border:1px solid #475569;background:#1e293b;font-weight:600}
+.btn:hover{background:#334155}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:1rem;padding:1.25rem}
+.pt{aspect-ratio:1/1;min-width:0;border:1px solid;border-radius:.4rem;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:3px 0;color:#fff;cursor:pointer;font-family:'JetBrains Mono',monospace}
+.pt.sel{border-color:#38bdf8!important;background:rgba(14,165,233,.5)!important;box-shadow:0 0 10px #38bdf8}
+.c0{background:rgba(30,58,138,.45);border-color:#3b82f6}.c1{background:rgba(153,27,27,.45);border-color:#ef4444}.c2{background:rgba(146,64,14,.45);border-color:#f59e0b}
+.c3{background:rgba(6,78,59,.45);border-color:#10b981}.c4{background:rgba(19,78,74,.45);border-color:#14b8a6}.c5{background:rgba(113,63,18,.45);border-color:#eab308}
+.c6{background:rgba(88,28,135,.45);border-color:#a855f7}.c7{background:rgba(131,24,67,.45);border-color:#ec4899}
+th,td{white-space:nowrap}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #1e293b;border-radius:.75rem}
+</style>
 </head>
-<body class="h-full font-sans antialiased bg-slate-950 text-slate-100 flex flex-col selection:bg-sky-500 selection:text-white">
-
-  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-gradient-to-tr from-amber-600 via-sky-600 to-cyan-500 rounded-xl shadow-lg shadow-sky-500/20 text-white">
-          <i data-lucide="flame" class="w-6 h-6"></i>
-        </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-            Foundry Charge Calculator
-            <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono">100kg Charge Mix</span>
-          </h1>
-          <p class="text-xs text-slate-400">Periodic Table Element Selector & Scrap Optimization</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="quickPresetBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 rounded-lg transition border border-slate-700">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> Load Gray Iron Preset
-        </button>
-        <button id="resetAllBtn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg transition border border-slate-700/50">
-          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Clear All
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-    <!-- Step 1: Authentic Periodic Table Grid -->
-    <section class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">1</span>
-            Select Alloy Elements (Periodic Table Layout)
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">Click any element on the periodic table to include or remove it from your metallurgical calculations.</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-xs text-slate-400">Active Elements:</span>
-          <div id="selectedBadges" class="flex flex-wrap gap-1"></div>
-        </div>
-      </div>
-
-      <!-- Quick Action Buttons & Category Legend -->
-      <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="text-slate-500 font-medium text-[11px] uppercase tracking-wider">Presets:</span>
-          <button type="button" onclick="selectPresetGroup('ferrous')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700/60 transition">
-            Ferrous (C, Si, Mn, P, S)
-          </button>
-          <button type="button" onclick="selectPresetGroup('stainless')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700/60 transition">
-            Stainless (C, Si, Mn, Cr, Ni, Mo)
-          </button>
-          <button type="button" onclick="selectPresetGroup('clear')" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700/60 transition">
-            Clear
-          </button>
-        </div>
-
-        <!-- Category Legend -->
-        <div class="flex items-center gap-2 overflow-x-auto text-[10px] text-slate-400 py-1">
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-blue-900 border border-blue-500"></span> Nonmetal</span>
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-900 border border-emerald-500"></span> Transition Metal</span>
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-900 border border-amber-500"></span> Metalloid</span>
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-teal-900 border border-teal-500"></span> Post-Transition</span>
-        </div>
-      </div>
-
-      <!-- Scrollable 18-Column Periodic Table Canvas -->
-      <div class="overflow-x-auto pb-2">
-        <div id="periodicTableGrid" class="min-w-[860px] grid grid-cols-18 gap-1.5 p-1 bg-slate-950/50 rounded-xl border border-slate-800/80">
-          <!-- Dynamic periodic table injected here -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Step 2 & 3 Dual-Column Layout -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-      <!-- Left Column: Inputs -->
-      <div class="lg:col-span-6 space-y-6">
-
-        <!-- Target Composition Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">2</span>
-                Target Elemental Percentage (%)
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Define target chemical specification for 100 kg total charge weight.</p>
-            </div>
-          </div>
-          <div id="targetFormContainer" class="overflow-x-auto"></div>
-        </div>
-
-        <!-- Scrap Inventory Matrix Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center text-xs font-bold border border-sky-500/30">3</span>
-                Scrap Alloy Inventory Compositions
-              </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Enter elemental percentage analysis for each available scrap grade.</p>
-            </div>
-            <button type="button" id="addScrapBtn" class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-sky-600/20 text-sky-300 hover:bg-sky-600/30 border border-sky-500/30 transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Scrap
-            </button>
-          </div>
-          <div id="scrapFormContainer" class="overflow-x-auto max-h-80"></div>
-        </div>
-
-        <!-- Run Calculation Settings -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-          <div class="flex items-center justify-between">
-            <label for="stepResolution" class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="sliders" class="w-4 h-4 text-sky-400"></i> Search Increment Step:
-            </label>
-            <select id="stepResolution" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-sky-500">
-              <option value="1">1% Step (5,151 mixes for 3 scraps)</option>
-              <option value="2" selected>2% Step (Balanced Speed & Precision)</option>
-              <option value="5">5% Step (Fast Overview)</option>
-              <option value="10">10% Step (Coarse Search)</option>
-            </select>
-          </div>
-          <button type="button" id="calculateBtn" class="w-full py-3 px-4 bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600 hover:from-sky-500 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-sky-600/20 flex items-center justify-center gap-2 transition-all transform active:scale-[0.99]">
-            <i data-lucide="calculator" class="w-4 h-4"></i> Calculate Optimal Charge Combinations
-          </button>
-        </div>
-
-      </div>
-
-      <!-- Right Column: Results & Analytics -->
-      <div class="lg:col-span-6 space-y-6">
-
-        <!-- Chart Comparison Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-sky-400"></i> Target vs Selected Scrap Blend
-              </h3>
-              <p class="text-xs text-slate-400">Compare target values with the blend selected in the table below.</p>
-            </div>
-            <span id="rankBadge" class="text-xs font-mono px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-              Rank #1 Match
-            </span>
-          </div>
-          <div class="h-56 relative w-full">
-            <canvas id="chartCanvas"></canvas>
-          </div>
-        </div>
-
-        <!-- Results Table -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col space-y-4">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-            <div>
-              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
-                <i data-lucide="list-filter" class="w-4 h-4 text-sky-400"></i> Evaluated Charge Mixes
-              </h3>
-              <p id="resultsCountSummary" class="text-xs text-slate-400">Click Calculate to run simulation.</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
-                <input type="text" id="filterInput" placeholder="Filter percentages..." class="bg-slate-800 border border-slate-700/80 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500 w-36">
-              </div>
-              <button id="exportCsvBtn" disabled class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 transition disabled:opacity-40">
-                <i data-lucide="download" class="w-3.5 h-3.5"></i> Export
-              </button>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto max-h-[400px] rounded-xl border border-slate-800">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead class="bg-slate-800/90 sticky top-0 z-10 text-slate-300 font-semibold border-b border-slate-700">
-                <tr id="resultsHeaderRow">
-                  <th class="py-2.5 px-3">#</th>
-                  <th class="py-2.5 px-3">Similarity</th>
-                </tr>
-              </thead>
-              <tbody id="resultsTbody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
-                <tr>
-                  <td colspan="12" class="py-12 text-center text-slate-500 font-sans">
-                    <div class="flex flex-col items-center justify-center gap-2">
-                      <i data-lucide="layers" class="w-8 h-8 text-slate-600"></i>
-                      <p class="text-sm">Select elements above and click "Calculate Optimal Charge".</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
-            <div class="flex items-center gap-1.5">
-              <span>Show</span>
-              <select id="pageSizeSelect" class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-200">
-                <option value="15">15</option>
-                <option value="30">30</option>
-                <option value="50">50</option>
-              </select>
-              <span>per page</span>
-            </div>
-            <div id="paginationNav" class="flex items-center gap-1"></div>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-  </main>
-
-  <script>
-    // Complete Periodic Table Dataset with standard column (1-18) and period (1-7 + f-block) grid positions
-    const FULL_PERIODIC_TABLE = [
-      // Period 1
-      { symbol: "H", name: "Hydrogen", num: 1, col: 1, row: 1, cat: "cat-reactive" },
-      { symbol: "He", name: "Helium", num: 2, col: 18, row: 1, cat: "cat-noble" },
-      // Period 2
-      { symbol: "Li", name: "Lithium", num: 3, col: 1, row: 2, cat: "cat-alkali" },
-      { symbol: "Be", name: "Beryllium", num: 4, col: 2, row: 2, cat: "cat-alkaline" },
-      { symbol: "B", name: "Boron", num: 5, col: 13, row: 2, cat: "cat-metalloid" },
-      { symbol: "C", name: "Carbon", num: 6, col: 14, row: 2, cat: "cat-reactive" },
-      { symbol: "N", name: "Nitrogen", num: 7, col: 15, row: 2, cat: "cat-reactive" },
-      { symbol: "O", name: "Oxygen", num: 8, col: 16, row: 2, cat: "cat-reactive" },
-      { symbol: "F", name: "Fluorine", num: 9, col: 17, row: 2, cat: "cat-reactive" },
-      { symbol: "Ne", name: "Neon", num: 10, col: 18, row: 2, cat: "cat-noble" },
-      // Period 3
-      { symbol: "Na", name: "Sodium", num: 11, col: 1, row: 3, cat: "cat-alkali" },
-      { symbol: "Mg", name: "Magnesium", num: 12, col: 2, row: 3, cat: "cat-alkaline" },
-      { symbol: "Al", name: "Aluminium", num: 13, col: 13, row: 3, cat: "cat-post-transition" },
-      { symbol: "Si", name: "Silicon", num: 14, col: 14, row: 3, cat: "cat-metalloid" },
-      { symbol: "P", name: "Phosphorus", num: 15, col: 15, row: 3, cat: "cat-reactive" },
-      { symbol: "S", name: "Sulfur", num: 16, col: 16, row: 3, cat: "cat-reactive" },
-      { symbol: "Cl", name: "Chlorine", num: 17, col: 17, row: 3, cat: "cat-reactive" },
-      { symbol: "Ar", name: "Argon", num: 18, col: 18, row: 3, cat: "cat-noble" },
-      // Period 4
-      { symbol: "K", name: "Potassium", num: 19, col: 1, row: 4, cat: "cat-alkali" },
-      { symbol: "Ca", name: "Calcium", num: 20, col: 2, row: 4, cat: "cat-alkaline" },
-      { symbol: "Sc", name: "Scandium", num: 21, col: 3, row: 4, cat: "cat-transition" },
-      { symbol: "Ti", name: "Titanium", num: 22, col: 4, row: 4, cat: "cat-transition" },
-      { symbol: "V", name: "Vanadium", num: 23, col: 5, row: 4, cat: "cat-transition" },
-      { symbol: "Cr", name: "Chromium", num: 24, col: 6, row: 4, cat: "cat-transition" },
-      { symbol: "Mn", name: "Manganese", num: 25, col: 7, row: 4, cat: "cat-transition" },
-      { symbol: "Fe", name: "Iron", num: 26, col: 8, row: 4, cat: "cat-transition" },
-      { symbol: "Co", name: "Cobalt", num: 27, col: 9, row: 4, cat: "cat-transition" },
-      { symbol: "Ni", name: "Nickel", num: 28, col: 10, row: 4, cat: "cat-transition" },
-      { symbol: "Cu", name: "Copper", num: 29, col: 11, row: 4, cat: "cat-transition" },
-      { symbol: "Zn", name: "Zinc", num: 30, col: 12, row: 4, cat: "cat-post-transition" },
-      { symbol: "Ga", name: "Gallium", num: 31, col: 13, row: 4, cat: "cat-post-transition" },
-      { symbol: "Ge", name: "Germanium", num: 32, col: 14, row: 4, cat: "cat-metalloid" },
-      { symbol: "As", name: "Arsenic", num: 33, col: 15, row: 4, cat: "cat-metalloid" },
-      { symbol: "Se", name: "Selenium", num: 34, col: 16, row: 4, cat: "cat-reactive" },
-      { symbol: "Br", name: "Bromine", num: 35, col: 17, row: 4, cat: "cat-reactive" },
-      { symbol: "Kr", name: "Krypton", num: 36, col: 18, row: 4, cat: "cat-noble" },
-      // Period 5
-      { symbol: "Rb", name: "Rubidium", num: 37, col: 1, row: 5, cat: "cat-alkali" },
-      { symbol: "Sr", name: "Strontium", num: 38, col: 2, row: 5, cat: "cat-alkaline" },
-      { symbol: "Y", name: "Yttrium", num: 39, col: 3, row: 5, cat: "cat-transition" },
-      { symbol: "Zr", name: "Zirconium", num: 40, col: 4, row: 5, cat: "cat-transition" },
-      { symbol: "Nb", name: "Niobium", num: 41, col: 5, row: 5, cat: "cat-transition" },
-      { symbol: "Mo", name: "Molybdenum", num: 42, col: 6, row: 5, cat: "cat-transition" },
-      { symbol: "Tc", name: "Technetium", num: 43, col: 7, row: 5, cat: "cat-transition" },
-      { symbol: "Ru", name: "Ruthenium", num: 44, col: 8, row: 5, cat: "cat-transition" },
-      { symbol: "Rh", name: "Rhodium", num: 45, col: 9, row: 5, cat: "cat-transition" },
-      { symbol: "Pd", name: "Palladium", num: 46, col: 10, row: 5, cat: "cat-transition" },
-      { symbol: "Ag", name: "Silver", num: 47, col: 11, row: 5, cat: "cat-transition" },
-      { symbol: "Cd", name: "Cadmium", num: 48, col: 12, row: 5, cat: "cat-post-transition" },
-      { symbol: "In", name: "Indium", num: 49, col: 13, row: 5, cat: "cat-post-transition" },
-      { symbol: "Sn", name: "Tin", num: 50, col: 14, row: 5, cat: "cat-post-transition" },
-      { symbol: "Sb", name: "Antimony", num: 51, col: 15, row: 5, cat: "cat-metalloid" },
-      { symbol: "Te", name: "Tellurium", num: 52, col: 16, row: 5, cat: "cat-metalloid" },
-      { symbol: "I", name: "Iodine", num: 53, col: 17, row: 5, cat: "cat-reactive" },
-      { symbol: "Xe", name: "Xenon", num: 54, col: 18, row: 5, cat: "cat-noble" },
-      // Period 6
-      { symbol: "Cs", name: "Caesium", num: 55, col: 1, row: 6, cat: "cat-alkali" },
-      { symbol: "Ba", name: "Barium", num: 56, col: 2, row: 6, cat: "cat-alkaline" },
-      { symbol: "La-Lu", name: "Lanthanides", num: "57-71", col: 3, row: 6, cat: "cat-lanthanide", placeholder: true },
-      { symbol: "Hf", name: "Hafnium", num: 72, col: 4, row: 6, cat: "cat-transition" },
-      { symbol: "Ta", name: "Tantalum", num: 73, col: 5, row: 6, cat: "cat-transition" },
-      { symbol: "W", name: "Tungsten", num: 74, col: 6, row: 6, cat: "cat-transition" },
-      { symbol: "Re", name: "Rhenium", num: 75, col: 7, row: 6, cat: "cat-transition" },
-      { symbol: "Os", name: "Osmium", num: 76, col: 8, row: 6, cat: "cat-transition" },
-      { symbol: "Ir", name: "Iridium", num: 77, col: 9, row: 6, cat: "cat-transition" },
-      { symbol: "Pt", name: "Platinum", num: 78, col: 10, row: 6, cat: "cat-transition" },
-      { symbol: "Au", name: "Gold", num: 79, col: 11, row: 6, cat: "cat-transition" },
-      { symbol: "Hg", name: "Mercury", num: 80, col: 12, row: 6, cat: "cat-post-transition" },
-      { symbol: "Tl", name: "Thallium", num: 81, col: 13, row: 6, cat: "cat-post-transition" },
-      { symbol: "Pb", name: "Lead", num: 82, col: 14, row: 6, cat: "cat-post-transition" },
-      { symbol: "Bi", name: "Bismuth", num: 83, col: 15, row: 6, cat: "cat-post-transition" },
-      { symbol: "Po", name: "Polonium", num: 84, col: 16, row: 6, cat: "cat-post-transition" },
-      { symbol: "At", name: "Astatine", num: 85, col: 17, row: 6, cat: "cat-metalloid" },
-      { symbol: "Rn", name: "Radon", num: 86, col: 18, row: 6, cat: "cat-noble" },
-      // Period 7
-      { symbol: "Fr", name: "Francium", num: 87, col: 1, row: 7, cat: "cat-alkali" },
-      { symbol: "Ra", name: "Radium", num: 88, col: 2, row: 7, cat: "cat-alkaline" },
-      { symbol: "Ac-Lr", name: "Actinides", num: "89-103", col: 3, row: 7, cat: "cat-actinide", placeholder: true },
-      { symbol: "Rf", name: "Rutherfordium", num: 104, col: 4, row: 7, cat: "cat-transition" },
-      { symbol: "Db", name: "Dubnium", num: 105, col: 5, row: 7, cat: "cat-transition" },
-      { symbol: "Sg", name: "Seaborgium", num: 106, col: 6, row: 7, cat: "cat-transition" },
-      { symbol: "Bh", name: "Bohrium", num: 107, col: 7, row: 7, cat: "cat-transition" },
-      { symbol: "Hs", name: "Hassium", num: 108, col: 8, row: 7, cat: "cat-transition" },
-      { symbol: "Mt", name: "Meitnerium", num: 109, col: 9, row: 7, cat: "cat-transition" },
-      { symbol: "Ds", name: "Darmstadtium", num: 110, col: 10, row: 7, cat: "cat-transition" },
-      { symbol: "Rg", name: "Roentgenium", num: 111, col: 11, row: 7, cat: "cat-transition" },
-      { symbol: "Cn", name: "Copernicium", num: 112, col: 12, row: 7, cat: "cat-transition" },
-      { symbol: "Nh", name: "Nihonium", num: 113, col: 13, row: 7, cat: "cat-post-transition" },
-      { symbol: "Fl", name: "Flerovium", num: 114, col: 14, row: 7, cat: "cat-post-transition" },
-      { symbol: "Mc", name: "Moscovium", num: 115, col: 15, row: 7, cat: "cat-post-transition" },
-      { symbol: "Lv", name: "Livermorium", num: 116, col: 16, row: 7, cat: "cat-post-transition" },
-      { symbol: "Ts", name: "Tennessine", num: 117, col: 17, row: 7, cat: "cat-reactive" },
-      { symbol: "Og", name: "Oganesson", num: 118, col: 18, row: 7, cat: "cat-noble" },
-
-      // Lanthanides Row (Row 8 offset)
-      { symbol: "La", name: "Lanthanum", num: 57, col: 4, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Ce", name: "Cerium", num: 58, col: 5, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Pr", name: "Praseodymium", num: 59, col: 6, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Nd", name: "Neodymium", num: 60, col: 7, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Pm", name: "Promethium", num: 61, col: 8, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Sm", name: "Samarium", num: 62, col: 9, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Eu", name: "Europium", num: 63, col: 10, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Gd", name: "Gadolinium", num: 64, col: 11, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Tb", name: "Terbium", num: 65, col: 12, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Dy", name: "Dysprosium", num: 66, col: 13, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Ho", name: "Holmium", num: 67, col: 14, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Er", name: "Erbium", num: 68, col: 15, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Tm", name: "Thulium", num: 69, col: 16, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Yb", name: "Ytterbium", num: 70, col: 17, row: 8.5, cat: "cat-lanthanide" },
-      { symbol: "Lu", name: "Lutetium", num: 71, col: 18, row: 8.5, cat: "cat-lanthanide" },
-
-      // Actinides Row (Row 9 offset)
-      { symbol: "Ac", name: "Actinium", num: 89, col: 4, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Th", name: "Thorium", num: 90, col: 5, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Pa", name: "Protactinium", num: 91, col: 6, row: 9.5, cat: "cat-actinide" },
-      { symbol: "U", name: "Uranium", num: 92, col: 7, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Np", name: "Neptunium", num: 93, col: 8, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Pu", name: "Plutonium", num: 94, col: 9, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Am", name: "Americium", num: 95, col: 10, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Cm", name: "Curium", num: 96, col: 11, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Bk", name: "Berkelium", num: 97, col: 12, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Cf", name: "Californium", num: 98, col: 13, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Es", name: "Einsteinium", num: 99, col: 14, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Fm", name: "Fermium", num: 100, col: 15, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Md", name: "Mendelevium", num: 101, col: 16, row: 9.5, cat: "cat-actinide" },
-      { symbol: "No", name: "Nobelium", num: 102, col: 17, row: 9.5, cat: "cat-actinide" },
-      { symbol: "Lr", name: "Lawrencium", num: 103, col: 18, row: 9.5, cat: "cat-actinide" }
-    ];
-
-    // State Variables
-    let selectedElements = new Set(["C", "Si", "Mn", "P", "S"]);
-    let targetValues = { "C": 3.40, "Si": 2.10, "Mn": 0.60, "P": 0.05, "S": 0.05 };
-    let scrapsList = [
-      { name: "Scrap_1", values: { "C": 3.80, "Si": 1.80, "Mn": 0.50, "P": 0.04, "S": 0.04 } },
-      { name: "Scrap_2", values: { "C": 2.20, "Si": 2.50, "Mn": 0.70, "P": 0.05, "S": 0.03 } },
-      { name: "Scrap_3", values: { "C": 0.20, "Si": 0.10, "Mn": 0.40, "P": 0.02, "S": 0.02 } }
-    ];
-
-    let calculatedResults = [];
-    let filteredResults = [];
-    let selectedRowIdx = 0;
-    let currentPage = 1;
-    let pageSize = 15;
-    let chartObj = null;
-
-    // Initialization
-    window.addEventListener("DOMContentLoaded", () => {
-      lucide.createIcons();
-      renderAuthenticPeriodicTable();
-      renderSelectedBadges();
-      renderTargetTable();
-      renderScrapTable();
-      initChart();
-
-      document.getElementById("calculateBtn").addEventListener("click", runCalculation);
-      document.getElementById("addScrapBtn").addEventListener("click", addScrapItem);
-      document.getElementById("quickPresetBtn").addEventListener("click", () => selectPresetGroup('ferrous'));
-      document.getElementById("resetAllBtn").addEventListener("click", () => selectPresetGroup('clear'));
-      document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
-      document.getElementById("filterInput").addEventListener("input", applyFilter);
-      document.getElementById("pageSizeSelect").addEventListener("change", (e) => {
-        pageSize = parseInt(e.target.value);
-        currentPage = 1;
-        renderResultsTable();
-      });
-
-      runCalculation();
-    });
-
-    function renderAuthenticPeriodicTable() {
-      const grid = document.getElementById("periodicTableGrid");
-      grid.innerHTML = "";
-
-      // 18 columns, rows 1 to 7 main + row 8 gap + row 8.5 & 9.5 for Lanthanides/Actinides
-      for (let r = 1; r <= 9.5; r += (r === 7 ? 1.5 : (r === 8.5 ? 1 : 1))) {
-        if (r === 8) {
-          // Spacer row before f-block
-          for (let c = 1; c <= 18; c++) {
-            grid.appendChild(document.createElement("div"));
-          }
-          continue;
-        }
-
-        for (let c = 1; c <= 18; c++) {
-          const elem = FULL_PERIODIC_TABLE.find(e => e.row === r && e.col === c);
-
-          if (elem) {
-            const isSelected = selectedElements.has(elem.symbol);
-            const isPlaceholder = elem.placeholder;
-
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.disabled = isPlaceholder;
-            btn.className = `pt-cell p-1 rounded-md border text-left flex flex-col justify-between font-mono relative cursor-pointer ${elem.cat} ${
-              isSelected ? 'selected' : 'hover:border-slate-300'
-            } ${isPlaceholder ? 'opacity-50 cursor-default' : ''}`;
-
-            if (!isPlaceholder) {
-              btn.onclick = () => toggleElement(elem.symbol);
-            }
-
-            btn.innerHTML = `
-              <div class="text-[8px] leading-none text-slate-300 font-semibold flex justify-between">
-                <span>${elem.num}</span>
-              </div>
-              <div class="text-xs font-bold text-center text-white my-auto">${elem.symbol}</div>
-              <div class="text-[7px] leading-none text-slate-400 truncate text-center">${elem.name}</div>
-            `;
-            grid.appendChild(btn);
-          } else {
-            const emptyCell = document.createElement("div");
-            emptyCell.className = "pt-cell pointer-events-none";
-            grid.appendChild(emptyCell);
-          }
-        }
-      }
-    }
-
-    function toggleElement(symbol) {
-      if (selectedElements.has(symbol)) {
-        if (selectedElements.size <= 1) {
-          alert("At least one element must remain selected.");
-          return;
-        }
-        selectedElements.delete(symbol);
-        delete targetValues[symbol];
-      } else {
-        selectedElements.add(symbol);
-        targetValues[symbol] = 1.0;
-      }
-      renderAuthenticPeriodicTable();
-      renderSelectedBadges();
-      renderTargetTable();
-      renderScrapTable();
-    }
-
-    function selectPresetGroup(type) {
-      if (type === 'ferrous') {
-        selectedElements = new Set(["C", "Si", "Mn", "P", "S"]);
-        targetValues = { "C": 3.40, "Si": 2.10, "Mn": 0.60, "P": 0.05, "S": 0.05 };
-      } else if (type === 'stainless') {
-        selectedElements = new Set(["C", "Si", "Mn", "Cr", "Ni", "Mo"]);
-        targetValues = { "C": 0.08, "Si": 1.00, "Mn": 2.00, "Cr": 18.00, "Ni": 8.00, "Mo": 0.50 };
-      } else if (type === 'clear') {
-        selectedElements = new Set(["C", "Si"]);
-        targetValues = { "C": 3.0, "Si": 2.0 };
-      }
-
-      // Re-align scrap matrices
-      scrapsList.forEach(s => {
-        selectedElements.forEach(e => {
-          if (s.values[e] === undefined) s.values[e] = 0.0;
-        });
-      });
-
-      renderAuthenticPeriodicTable();
-      renderSelectedBadges();
-      renderTargetTable();
-      renderScrapTable();
-      runCalculation();
-    }
-
-    function renderSelectedBadges() {
-      const container = document.getElementById("selectedBadges");
-      container.innerHTML = "";
-      selectedElements.forEach(symbol => {
-        const badge = document.createElement("span");
-        badge.className = "px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-mono font-semibold flex items-center gap-1";
-        badge.innerHTML = `${symbol} <i data-lucide="x" class="w-3 h-3 cursor-pointer hover:text-white" onclick="toggleElement('${symbol}')"></i>`;
-        container.appendChild(badge);
-      });
-      lucide.createIcons();
-    }
-
-    function renderTargetTable() {
-      const container = document.getElementById("targetFormContainer");
-      const elems = Array.from(selectedElements);
-
-      let html = `
-        <table class="w-full text-xs text-left border-collapse">
-          <thead>
-            <tr class="border-b border-slate-800 text-slate-400 font-semibold">
-              ${elems.map(e => `<th class="py-2 px-2 text-center text-sky-400">${e} Target %</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              ${elems.map(e => `
-                <td class="py-2 px-1">
-                  <input type="number" step="0.01" value="${targetValues[e] ?? 0.0}" 
-                         onchange="targetValues['${e}'] = parseFloat(this.value) || 0.0"
-                         class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-center font-mono text-slate-100 focus:border-sky-500 focus:outline-none">
-                </td>
-              `).join('')}
-            </tr>
-          </tbody>
-        </table>
-      `;
-      container.innerHTML = html;
-    }
-
-    function renderScrapTable() {
-      const container = document.getElementById("scrapFormContainer");
-      const elems = Array.from(selectedElements);
-
-      let html = `
-        <table class="w-full text-xs text-left border-collapse">
-          <thead class="bg-slate-800/60 sticky top-0">
-            <tr class="border-b border-slate-700 text-slate-300 font-semibold">
-              <th class="py-2 px-2 w-28">Scrap Name</th>
-              ${elems.map(e => `<th class="py-2 px-2 text-center text-emerald-400">${e} %</th>`).join('')}
-              <th class="py-2 px-1 w-8"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-800">
-      `;
-
-      scrapsList.forEach((scrap, sIdx) => {
-        html += `
-          <tr>
-            <td class="py-1.5 px-2">
-              <input type="text" value="${scrap.name}" onchange="scrapsList[${sIdx}].name = this.value.trim()"
-                     class="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 font-semibold text-sky-400 focus:border-sky-500 focus:outline-none">
-            </td>
-            ${elems.map(e => `
-              <td class="py-1.5 px-1">
-                <input type="number" step="0.01" value="${scrap.values[e] ?? 0.0}" 
-                       onchange="updateScrapElemValue(${sIdx}, '${e}', this.value)"
-                       class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-center font-mono text-slate-100 focus:border-sky-500 focus:outline-none">
-              </td>
-            `).join('')}
-            <td class="py-1.5 px-1 text-center">
-              <button type="button" onclick="removeScrapItem(${sIdx})" class="text-slate-500 hover:text-rose-400 p-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function addScrapItem() {
-      const idx = scrapsList.length + 1;
-      const newScrap = { name: `Scrap_${idx}`, values: {} };
-      selectedElements.forEach(e => newScrap.values[e] = 0.0);
-      scrapsList.push(newScrap);
-      renderScrapTable();
-    }
-
-    function removeScrapItem(idx) {
-      if (scrapsList.length <= 1) {
-        alert("Must keep at least one scrap material.");
-        return;
-      }
-      scrapsList.splice(idx, 1);
-      renderScrapTable();
-    }
-
-    function updateScrapElemValue(sIdx, elem, val) {
-      if (!scrapsList[sIdx].values) scrapsList[sIdx].values = {};
-      scrapsList[sIdx].values[elem] = parseFloat(val) || 0.0;
-    }
-
-    function* partitionWeight(partsCount, total, step) {
-      if (partsCount === 1) {
-        yield [total];
-        return;
-      }
-      for (let w = 0; w <= total; w += step) {
-        for (let rest of partitionWeight(partsCount - 1, total - w, step)) {
-          yield [w, ...rest];
-        }
-      }
-    }
-
-    function runCalculation() {
-      const elems = Array.from(selectedElements);
-      const scrapCount = scrapsList.length;
-      const step = parseInt(document.getElementById("stepResolution").value) || 2;
-
-      calculatedResults = [];
-
-      for (let weights of partitionWeight(scrapCount, 100, step)) {
-        let scrapAllocations = {};
-        scrapsList.forEach((s, idx) => {
-          scrapAllocations[s.name] = weights[idx];
-        });
-
-        let blendComposition = {};
-        let absErrorSum = 0.0;
-
-        elems.forEach(e => {
-          let targetPct = targetValues[e] ?? 0.0;
-          let achievedPct = 0.0;
-
-          scrapsList.forEach((s, idx) => {
-            let elemPctInScrap = s.values[e] ?? 0.0;
-            achievedPct += weights[idx] * (elemPctInScrap / 100.0);
-          });
-
-          blendComposition[e] = achievedPct;
-          absErrorSum += Math.abs(achievedPct - targetPct);
-        });
-
-        let similarity = Math.max(0.0, 100.0 - absErrorSum);
-
-        calculatedResults.push({
-          weights: scrapAllocations,
-          composition: blendComposition,
-          error: absErrorSum,
-          similarity: similarity
-        });
-      }
-
-      calculatedResults.sort((a, b) => b.similarity - a.similarity);
-
-      filteredResults = [...calculatedResults];
-      selectedRowIdx = 0;
-      currentPage = 1;
-
-      document.getElementById("exportCsvBtn").disabled = calculatedResults.length === 0;
-
-      renderResultsHeader();
-      renderResultsTable();
-      updateChart();
-    }
-
-    function renderResultsHeader() {
-      const headerRow = document.getElementById("resultsHeaderRow");
-      const elems = Array.from(selectedElements);
-
-      let html = `
-        <th class="py-2.5 px-3">#</th>
-        <th class="py-2.5 px-3">Similarity</th>
-      `;
-
-      scrapsList.forEach(s => {
-        html += `<th class="py-2.5 px-3 text-sky-400">${s.name} (kg)</th>`;
-      });
-
-      elems.forEach(e => {
-        html += `<th class="py-2.5 px-3 text-emerald-400">${e} (%)</th>`;
-      });
-
-      html += `<th class="py-2.5 px-3 text-slate-400">Abs Dev</th>`;
-      headerRow.innerHTML = html;
-    }
-
-    function renderResultsTable() {
-      const tbody = document.getElementById("resultsTbody");
-      const elems = Array.from(selectedElements);
-
-      tbody.innerHTML = "";
-
-      document.getElementById("resultsCountSummary").innerText = 
-        `Evaluated ${calculatedResults.length.toLocaleString()} mix solutions (${filteredResults.length.toLocaleString()} active).`;
-
-      if (filteredResults.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="15" class="py-8 text-center text-slate-500 font-sans">No matching combinations.</td></tr>`;
-        return;
-      }
-
-      let start = (currentPage - 1) * pageSize;
-      let end = Math.min(start + pageSize, filteredResults.length);
-
-      for (let i = start; i < end; i++) {
-        const res = filteredResults[i];
-        const tr = document.createElement("tr");
-        tr.className = `hover:bg-slate-800/80 cursor-pointer transition ${i === selectedRowIdx ? 'bg-sky-950/70 border-l-2 border-sky-400' : ''}`;
-        tr.onclick = () => {
-          selectedRowIdx = i;
-          renderResultsTable();
-          updateChart();
-        };
-
-        let badgeStyle = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-        if (res.similarity < 95 && res.similarity >= 85) badgeStyle = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-        else if (res.similarity < 85) badgeStyle = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-
-        let html = `
-          <td class="py-2 px-3 text-slate-500 text-[11px]">${i + 1}</td>
-          <td class="py-2 px-3">
-            <span class="inline-block px-2 py-0.5 rounded-full border text-[11px] font-semibold ${badgeStyle}">
-              ${res.similarity.toFixed(2)}%
-            </span>
-          </td>
-        `;
-
-        scrapsList.forEach(s => {
-          html += `<td class="py-2 px-3 font-semibold text-slate-200">${res.weights[s.name] ?? 0}</td>`;
-        });
-
-        elems.forEach(e => {
-          html += `<td class="py-2 px-3 text-emerald-300">${(res.composition[e] ?? 0).toFixed(2)}</td>`;
-        });
-
-        html += `<td class="py-2 px-3 text-slate-400">${res.error.toFixed(2)}</td>`;
-
-        tr.innerHTML = html;
-        tbody.appendChild(tr);
-      }
-
-      renderPaginationControls();
-    }
-
-    function applyFilter() {
-      const q = document.getElementById("filterInput").value.toLowerCase();
-      filteredResults = calculatedResults.filter(res => {
-        return Object.values(res.weights).some(w => w.toString().includes(q)) ||
-               res.similarity.toFixed(2).includes(q);
-      });
-      currentPage = 1;
-      selectedRowIdx = 0;
-      renderResultsTable();
-      updateChart();
-    }
-
-    function renderPaginationControls() {
-      const nav = document.getElementById("paginationNav");
-      nav.innerHTML = "";
-
-      const totalPages = Math.ceil(filteredResults.length / pageSize);
-      if (totalPages <= 1) return;
-
-      let prev = document.createElement("button");
-      prev.className = "px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs";
-      prev.innerText = "Prev";
-      prev.disabled = currentPage === 1;
-      prev.onclick = () => { currentPage--; renderResultsTable(); };
-
-      let next = document.createElement("button");
-      next.className = "px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-xs";
-      next.innerText = "Next";
-      next.disabled = currentPage === totalPages;
-      next.onclick = () => { currentPage++; renderResultsTable(); };
-
-      let info = document.createElement("span");
-      info.className = "text-slate-400 text-xs px-2";
-      info.innerText = `${currentPage} / ${totalPages}`;
-
-      nav.appendChild(prev);
-      nav.appendChild(info);
-      nav.appendChild(next);
-    }
-
-    function initChart() {
-      const ctx = document.getElementById("chartCanvas").getContext("2d");
-      chartObj = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [
-            {
-              label: 'Target %',
-              data: [],
-              backgroundColor: 'rgba(2, 132, 199, 0.75)',
-              borderColor: 'rgba(56, 189, 248, 1)',
-              borderWidth: 1,
-              borderRadius: 4
-            },
-            {
-              label: 'Achieved Mix %',
-              data: [],
-              backgroundColor: 'rgba(16, 185, 129, 0.75)',
-              borderColor: 'rgba(52, 211, 153, 1)',
-              borderWidth: 1,
-              borderRadius: 4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
-          },
-          scales: {
-            x: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } },
-            y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } }
-          }
-        }
-      });
-    }
-
-    function updateChart() {
-      if (!chartObj || filteredResults.length === 0) return;
-
-      const selected = filteredResults[selectedRowIdx] || filteredResults[0];
-      const elems = Array.from(selectedElements);
-
-      const targetData = elems.map(e => targetValues[e] ?? 0.0);
-      const achievedData = elems.map(e => selected.composition[e] ?? 0.0);
-
-      chartObj.data.labels = elems;
-      chartObj.data.datasets[0].data = targetData;
-      chartObj.data.datasets[1].data = achievedData;
-      chartObj.update();
-
-      document.getElementById("rankBadge").innerText = 
-        `Rank #${selectedRowIdx + 1} - ${selected.similarity.toFixed(2)}% Match`;
-    }
-
-    function exportCSV() {
-      if (calculatedResults.length === 0) return;
-
-      const elems = Array.from(selectedElements);
-      let headers = ['Rank', 'Similarity_Pct', 'Abs_Dev'];
-      scrapsList.forEach(s => headers.push(`${s.name}_kg`));
-      elems.forEach(e => headers.push(`${e}_pct`));
-
-      let rows = [headers.join(',')];
-
-      calculatedResults.forEach((res, idx) => {
-        let row = [
-          idx + 1,
-          res.similarity.toFixed(2),
-          res.error.toFixed(2)
-        ];
-        scrapsList.forEach(s => row.push(res.weights[s.name] ?? 0));
-        elems.forEach(e => row.push((res.composition[e] ?? 0).toFixed(4)));
-        rows.push(row.join(','));
-      });
-
-      const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `foundry_charge_mix_${Date.now()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  </script>
+<body class="font-sans antialiased">
+<header class="border-b border-slate-800 bg-slate-900 px-4 py-4">
+ <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3">
+  <div><h1 class="text-xl font-bold text-white">Foundry Charge Calculator</h1>
+  <p class="text-sm text-slate-400">100 kg charge from scrap, trimmed with binary alloys</p></div>
+  <div class="flex gap-2"><button class="btn" onclick="preset('ferrous')">Gray iron preset</button><button class="btn" onclick="preset('clear')">Clear all</button></div>
+ </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+<section class="card space-y-3">
+ <h2 class="text-lg font-semibold text-white">1. Select elements</h2>
+ <p class="text-sm text-slate-400">Tap elements to add or remove them. Swipe sideways to see the whole table.</p>
+ <div class="flex flex-wrap gap-2">
+  <button class="btn text-sky-300" onclick="preset('ferrous')">Ferrous (C Si Mn P S)</button>
+  <button class="btn text-teal-300" onclick="preset('stainless')">Stainless (C Si Mn Cr Ni Mo)</button>
+ </div>
+ <div id="badges" class="flex flex-wrap gap-2 text-sm"></div>
+ <div class="tw p-2 bg-slate-950"><div id="ptGrid" class="grid gap-1.5" style="grid-template-columns:repeat(18,52px);width:max-content"></div></div>
+</section>
+
+<section class="card space-y-3">
+ <h2 class="text-lg font-semibold text-white">2. Target composition (%)</h2>
+ <div id="targetBox" class="tw p-2"></div>
+</section>
+
+<section class="card space-y-3">
+ <div class="flex flex-wrap items-center justify-between gap-2">
+  <div><h2 class="text-lg font-semibold text-white">3. Scrap inventory (%)</h2>
+  <p class="text-sm text-slate-400">Analysis of each scrap grade.</p></div>
+  <button class="btn text-sky-300" onclick="addScrap()">+ Add scrap</button>
+ </div>
+ <div id="scrapBox" class="tw p-2"></div>
+</section>
+
+<section class="card space-y-3">
+ <div class="flex flex-wrap items-center justify-between gap-2">
+  <div><h2 class="text-lg font-semibold text-white">4. Binary alloys</h2>
+  <p class="text-sm text-slate-400">Each alloy has two elements and their ratio (e.g. FeSi = 25% Fe + 75% Si). The second % fills in automatically. Elements not selected in step 1 (usually Fe) are treated as balance.</p></div>
+  <button class="btn text-amber-300" onclick="addAlloy()">+ Add alloy</button>
+ </div>
+ <label class="flex items-center gap-3 text-base"><input id="useAlloys" type="checkbox" checked class="w-6 h-6 accent-sky-500"> Use binary alloys to hit the target exactly</label>
+ <div id="alloyBox" class="tw p-2"></div>
+ <h3 class="text-base font-semibold text-white pt-2">Alloy composition in selected elements (%)</h3>
+ <div id="alloyComp" class="tw p-2"></div>
+</section>
+
+<section class="card space-y-4">
+ <label class="block text-base font-semibold">Scrap search step
+  <select id="step" class="inp mt-2">
+   <option value="1">1% (fine, slower)</option><option value="2" selected>2% (balanced)</option><option value="5">5% (fast)</option><option value="10">10% (coarse)</option>
+  </select></label>
+ <button id="calcBtn" class="w-full min-h-[56px] rounded-xl bg-gradient-to-r from-sky-600 to-teal-600 text-white font-bold text-base" onclick="calc()">Calculate charge</button>
+ <p id="msg" class="text-sm text-amber-300"></p>
+</section>
+
+<!-- Results: scroll down -->
+<section id="results" class="card space-y-4">
+ <h2 class="text-lg font-semibold text-white">Results</h2>
+ <div id="sheet" class="rounded-xl border border-sky-700/50 bg-sky-950/40 p-4 text-base space-y-1"></div>
+ <div class="relative w-full" style="height:320px"><canvas id="chart"></canvas></div>
+ <div class="flex flex-wrap items-center justify-between gap-2">
+  <p id="count" class="text-sm text-slate-400"></p>
+  <button id="csvBtn" class="btn" onclick="exportCSV()" disabled>Export CSV</button>
+ </div>
+ <div class="tw"><table class="w-full text-left text-sm font-mono"><thead id="rHead" class="bg-slate-800 text-slate-200"></thead><tbody id="rBody" class="divide-y divide-slate-800"></tbody></table></div>
+ <div class="flex items-center justify-between gap-2">
+  <button class="btn" id="prev">Prev</button><span id="pg" class="text-sm text-slate-400"></span><button class="btn" id="next">Next</button>
+ </div>
+</section>
+</main>
+
+<script>
+const SYM="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" ");
+const NONMET="H C N O P S Se F Cl Br I".split(" "),METLD="B Si Ge As Sb Te At".split(" "),NOBLE="He Ne Ar Kr Xe Rn Og".split(" ");
+function pos(z){ // returns [col,row]
+ if(z<=2)return[z==1?1:18,1];
+ const P=[[3,10,2],[11,18,3],[19,36,4],[37,54,5]];
+ for(const[a,b,r]of P)if(z>=a&&z<=b){const i=z-a;return r<4?[i<2?i+1:i+11,r]:[i+1,r]}
+ if(z>=57&&z<=71)return[z-54,9];
+ if(z>=89&&z<=103)return[z-86,10];
+ if(z<=86)return z<=56?[z-54,6]:[z-68,6];
+ return z<=88?[z-86,7]:[z-100,7];
+}
+function cat(s,c){return NOBLE.includes(s)?6:NONMET.includes(s)?0:METLD.includes(s)?5:c==1?1:c==2?2:c>=3&&c<=12?3:4}
+let sel=new Set(["C","Si","Mn","P","S"]);
+let tgt={C:3.4,Si:2.1,Mn:.6,P:.05,S:.05};
+let scraps=[{name:"Scrap_1",v:{C:3.8,Si:1.8,Mn:.5,P:.04,S:.04}},{name:"Scrap_2",v:{C:2.2,Si:2.5,Mn:.7,P:.05,S:.03}},{name:"Scrap_3",v:{C:.2,Si:.1,Mn:.4,P:.02,S:.02}}];
+let alloys=[{name:"FeSi",a:"Si",pa:75,b:"Fe"},{name:"FeMn",a:"Mn",pa:80,b:"Fe"},{name:"FeP",a:"P",pa:25,b:"Fe"}];
+let res=[],row=0,page=1,PS=10,chart;
+const E=()=>[...sel];
+const opts=cur=>SYM.map(s=>`<option ${s==cur?"selected":""}>${s}</option>`).join("");
+
+function frac(al,e){return(al.a==e?al.pa:0)+(al.b==e?100-al.pa:0)}
+
+function drawPT(){
+ const g=document.getElementById("ptGrid");g.innerHTML="";
+ SYM.forEach((s,i)=>{const z=i+1,[c,r]=pos(z),b=document.createElement("button");
+  b.type="button";b.className=`pt c${cat(s,c)} ${sel.has(s)?"sel":""}`;
+  b.style.gridColumn=c;b.style.gridRow=r;b.title=s;
+  b.innerHTML=`<span style="font-size:10px;opacity:.8">${z}</span><b style="font-size:17px">${s}</b><span style="height:8px"></span>`;
+  b.onclick=()=>toggle(s);g.appendChild(b)});
+ document.getElementById("badges").innerHTML=E().map(s=>`<span class="px-3 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 font-mono font-semibold">${s}</span>`).join("");
+}
+function toggle(s){
+ if(sel.has(s)){if(sel.size<=1)return alert("Keep at least one element.");sel.delete(s);delete tgt[s]}
+ else{sel.add(s);tgt[s]=1}
+ renderAll();
+}
+function preset(t){
+ if(t=="ferrous"){sel=new Set(["C","Si","Mn","P","S"]);tgt={C:3.4,Si:2.1,Mn:.6,P:.05,S:.05};alloys=[{name:"FeSi",a:"Si",pa:75,b:"Fe"},{name:"FeMn",a:"Mn",pa:80,b:"Fe"},{name:"FeP",a:"P",pa:25,b:"Fe"}]}
+ else if(t=="stainless"){sel=new Set(["C","Si","Mn","Cr","Ni","Mo"]);tgt={C:.08,Si:1,Mn:2,Cr:18,Ni:8,Mo:.5};alloys=[{name:"FeCr",a:"Cr",pa:65,b:"Fe"},{name:"FeNi",a:"Ni",pa:30,b:"Fe"},{name:"FeMo",a:"Mo",pa:65,b:"Fe"},{name:"FeSi",a:"Si",pa:75,b:"Fe"},{name:"FeMn",a:"Mn",pa:80,b:"Fe"}]}
+ else{sel=new Set(["C","Si"]);tgt={C:3,Si:2};alloys=[]}
+ renderAll();calc();
+}
+function renderAll(){drawPT();drawTarget();drawScrap();drawAlloys()}
+
+function drawTarget(){
+ document.getElementById("targetBox").innerHTML=`<table class="text-sm"><thead><tr>${E().map(e=>`<th class="px-1 pb-1 text-center text-sky-400">${e} %</th>`).join("")}</tr></thead><tbody><tr>${E().map(e=>`<td class="px-1"><input class="inp" type="number" inputmode="decimal" step="0.01" value="${tgt[e]??0}" onchange="tgt['${e}']=parseFloat(this.value)||0"></td>`).join("")}</tr></tbody></table>`;
+}
+function drawScrap(){
+ let h=`<table class="text-sm"><thead><tr><th class="px-1 pb-1 text-left">Name</th>${E().map(e=>`<th class="px-1 pb-1 text-center text-emerald-400">${e} %</th>`).join("")}<th></th></tr></thead><tbody>`;
+ scraps.forEach((s,i)=>{h+=`<tr><td class="p-1"><input class="inp l" value="${s.name}" onchange="scraps[${i}].name=this.value.trim()||'Scrap'"></td>${E().map(e=>`<td class="p-1"><input class="inp" type="number" inputmode="decimal" step="0.01" value="${s.v[e]??0}" onchange="scraps[${i}].v['${e}']=parseFloat(this.value)||0"></td>`).join("")}<td class="p-1"><button class="btn text-rose-400" onclick="delScrap(${i})">Delete</button></td></tr>`});
+ document.getElementById("scrapBox").innerHTML=h+"</tbody></table>";
+}
+function addScrap(){scraps.push({name:"Scrap_"+(scraps.length+1),v:{}});drawScrap()}
+function delScrap(i){if(scraps.length<=1)return alert("Keep at least one scrap.");scraps.splice(i,1);drawScrap()}
+
+function drawAlloys(){
+ let h=`<table class="text-sm"><thead><tr><th class="px-1 pb-1 text-left">Alloy name</th><th class="px-1 pb-1 text-left">Element A</th><th class="px-1 pb-1">A %</th><th class="px-1 pb-1 text-left">Element B</th><th class="px-1 pb-1">B % (auto)</th><th></th></tr></thead><tbody>`;
+ alloys.forEach((a,i)=>{h+=`<tr><td class="p-1"><input class="inp l" value="${a.name}" onchange="alloys[${i}].name=this.value.trim()||'Alloy';drawAlloyComp()"></td>
+ <td class="p-1"><select class="inp" onchange="alloys[${i}].a=this.value;drawAlloyComp()">${opts(a.a)}</select></td>
+ <td class="p-1"><input class="inp" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${a.pa}" onchange="setPa(${i},this.value)"></td>
+ <td class="p-1"><select class="inp" onchange="alloys[${i}].b=this.value;drawAlloyComp()">${opts(a.b)}</select></td>
+ <td class="p-1"><input id="pb${i}" class="inp bg-slate-800/50" readonly value="${+(100-a.pa).toFixed(3)}"></td>
+ <td class="p-1"><button class="btn text-rose-400" onclick="alloys.splice(${i},1);drawAlloys()">Delete</button></td></tr>`});
+ document.getElementById("alloyBox").innerHTML=alloys.length?h+"</tbody></table>":`<p class="p-3 text-sm text-slate-400">No alloys yet. Tap "+ Add alloy".</p>`;
+ drawAlloyComp();
+}
+function setPa(i,v){v=Math.min(100,Math.max(0,parseFloat(v)||0));alloys[i].pa=v;document.getElementById("pb"+i).value=+(100-v).toFixed(3);drawAlloys()}
+function addAlloy(){alloys.push({name:"Alloy_"+(alloys.length+1),a:"Si",pa:50,b:"Fe"});drawAlloys()}
+function drawAlloyComp(){
+ const el=document.getElementById("alloyComp");
+ if(!alloys.length){el.innerHTML=`<p class="p-3 text-sm text-slate-400">Nothing to show.</p>`;return}
+ el.innerHTML=`<table class="text-sm font-mono"><thead><tr><th class="px-3 py-1 text-left font-sans">Alloy</th>${E().map(e=>`<th class="px-3 py-1 text-emerald-400">${e} %</th>`).join("")}<th class="px-3 py-1 text-slate-400 font-sans">Balance %</th></tr></thead><tbody>${alloys.map(a=>{const t=E().reduce((s,e)=>s+frac(a,e),0);return`<tr class="border-t border-slate-800"><td class="px-3 py-2 font-sans font-semibold text-amber-300">${a.name}</td>${E().map(e=>`<td class="px-3 py-2 text-center">${frac(a,e).toFixed(2)}</td>`).join("")}<td class="px-3 py-2 text-center text-slate-400">${(100-t).toFixed(2)}</td></tr>`}).join("")}</tbody></table>`;
+}
+
+function* parts(n,tot,st){
+ if(n==1){yield[tot];return}
+ for(let w=0;w<=tot;w+=st)for(const r of parts(n-1,tot-w,st))yield[w,...r];
+}
+function solveAlloys(base,el){ // returns kg of alloy per 100 kg of scrap blend
+ const n=alloys.length,a=new Array(n).fill(0),used=new Array(n).fill(-1);
+ el.forEach((e,ei)=>{let best=-1,bf=0;alloys.forEach((al,j)=>{const f=frac(al,e);if(used[j]<0&&f>bf){bf=f;best=j}});if(best>=0)used[best]=ei});
+ const M=(j,ei)=>frac(alloys[j],el[ei])-tgt[el[ei]];
+ for(let it=0;it<80;it++)for(let j=0;j<n;j++){
+  const ei=used[j];if(ei<0)continue;
+  const d=M(j,ei);if(Math.abs(d)<1e-9)continue;
+  let rhs=100*(tgt[el[ei]]-base[ei]);
+  for(let k=0;k<n;k++)if(k!=j)rhs-=M(k,ei)*a[k];
+  a[j]=Math.max(0,rhs/d);
+ }
+ return a;
+}
+function calc(){
+ const el=E(),n=scraps.length,st=parseInt(document.getElementById("step").value),msg=document.getElementById("msg");
+ let k=100/st,combos=1;for(let i=1;i<n;i++)combos=combos*(k+i)/i;
+ if(combos>300000){msg.textContent=`That is ${Math.round(combos).toLocaleString()} mixes. Choose a larger step or fewer scraps.`;return}
+ msg.textContent="";
+ const useA=document.getElementById("useAlloys").checked&&alloys.length>0;
+ res=[];
+ for(const w of parts(n,100,st)){
+  const base=el.map(e=>scraps.reduce((s,sc,i)=>s+w[i]*(sc.v[e]??0)/100,0));
+  const a=useA?solveAlloys(base,el):alloys.map(()=>0);
+  const A=a.reduce((s,x)=>s+x,0),T=100+A,f=100/T;
+  const comp=el.map((e,ei)=>(base[ei]+alloys.reduce((s,al,j)=>s+a[j]*frac(al,e)/100,0))/T*100);
+  const err=comp.reduce((s,c,ei)=>s+Math.abs(c-(tgt[el[ei]]??0)),0);
+  res.push({sc:w.map(x=>x*f),al:a.map(x=>x*f),comp,err,A:A*f});
+ }
+ res.sort((x,y)=>(Math.round(x.err*1e4)-Math.round(y.err*1e4))||(x.A-y.A));
+ row=0;page=1;
+ document.getElementById("csvBtn").disabled=!res.length;
+ drawResults();
+}
+const fmt=(x,d=2)=>(+x).toFixed(d);
+function drawResults(){
+ const el=E();
+ document.getElementById("rHead").innerHTML=`<tr><th class="p-3">#</th><th class="p-3">Match</th>${scraps.map(s=>`<th class="p-3 text-sky-400">${s.name} kg</th>`).join("")}${alloys.map(a=>`<th class="p-3 text-amber-300">${a.name} kg</th>`).join("")}${el.map(e=>`<th class="p-3 text-emerald-400">${e} %</th>`).join("")}<th class="p-3">Dev</th></tr>`;
+ const body=document.getElementById("rBody"),tp=Math.max(1,Math.ceil(res.length/PS));
+ body.innerHTML="";
+ for(let i=(page-1)*PS;i<Math.min(res.length,page*PS);i++){
+  const r=res[i],sim=Math.max(0,100-r.err),tr=document.createElement("tr");
+  tr.className="cursor-pointer hover:bg-slate-800 "+(i==row?"bg-sky-950":"");
+  tr.onclick=()=>{row=i;drawResults()};
+  tr.innerHTML=`<td class="p-3 text-slate-500">${i+1}</td><td class="p-3 font-semibold ${sim>=95?"text-emerald-400":sim>=85?"text-amber-400":"text-rose-400"}">${fmt(sim)}%</td>${r.sc.map(x=>`<td class="p-3">${fmt(x)}</td>`).join("")}${r.al.map(x=>`<td class="p-3 text-amber-200">${fmt(x)}</td>`).join("")}${r.comp.map(c=>`<td class="p-3 text-emerald-300">${fmt(c,3)}</td>`).join("")}<td class="p-3 text-slate-400">${fmt(r.err,3)}</td>`;
+  body.appendChild(tr);
+ }
+ document.getElementById("count").textContent=`${res.length.toLocaleString()} mixes ranked by closeness, then least alloy used. Tap a row to view it.`;
+ document.getElementById("pg").textContent=`${page} / ${tp}`;
+ document.getElementById("prev").disabled=page<=1;document.getElementById("next").disabled=page>=tp;
+ const r=res[row];if(!r)return;
+ document.getElementById("sheet").innerHTML=`<div class="font-semibold text-white">Charge sheet, mix #${row+1} (total 100 kg)</div>`+
+  scraps.map((s,i)=>`<div class="flex justify-between gap-4"><span class="text-sky-300">${s.name}</span><b class="font-mono">${fmt(r.sc[i])} kg</b></div>`).join("")+
+  alloys.map((a,j)=>`<div class="flex justify-between gap-4"><span class="text-amber-300">${a.name} (${a.a} ${a.pa}% / ${a.b} ${fmt(100-a.pa,1)}%)</span><b class="font-mono">${fmt(r.al[j])} kg</b></div>`).join("")+
+  `<div class="pt-2 text-slate-300 break-words">Result: ${el.map((e,i)=>`${e} ${fmt(r.comp[i],3)}%`).join(", ")}</div>`;
+ if(chart){chart.data.labels=el;chart.data.datasets[0].data=el.map(e=>tgt[e]??0);chart.data.datasets[1].data=r.comp;chart.update()}
+}
+document.getElementById("prev").onclick=()=>{page--;drawResults()};
+document.getElementById("next").onclick=()=>{page++;drawResults()};
+function exportCSV(){
+ const el=E(),h=["Rank","Dev",...scraps.map(s=>s.name+"_kg"),...alloys.map(a=>a.name+"_kg"),...el.map(e=>e+"_pct")];
+ const rows=res.slice(0,5000).map((r,i)=>[i+1,fmt(r.err,4),...r.sc.map(x=>fmt(x,3)),...r.al.map(x=>fmt(x,3)),...r.comp.map(x=>fmt(x,4))].join(","));
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([[h.join(","),...rows].join("\n")],{type:"text/csv"}));
+ a.download="charge_mix.csv";document.body.appendChild(a);a.click();a.remove();
+}
+window.addEventListener("DOMContentLoaded",()=>{
+ chart=new Chart(document.getElementById("chart"),{type:"bar",data:{labels:[],datasets:[{label:"Target %",data:[],backgroundColor:"rgba(2,132,199,.8)"},{label:"Achieved %",data:[],backgroundColor:"rgba(16,185,129,.8)"}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#cbd5e1"}}},scales:{x:{ticks:{color:"#cbd5e1"},grid:{color:"#1e293b"}},y:{ticks:{color:"#cbd5e1"},grid:{color:"#1e293b"}}}}});
+ renderAll();calc();
+});
+</script>
 </body>
 </html>
